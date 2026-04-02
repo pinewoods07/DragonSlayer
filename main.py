@@ -159,6 +159,161 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ── 효과음 시스템 (JavaScript Web Audio API) ──
+SOUND_JS = """
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+function playSound(type) {
+    const ctx = new AudioCtx();
+    
+    if (type === 'sword') {
+        // 전사: 칼 휘두르는 소리 (쨍!)
+        // 노이즈 + 고주파 스윕
+        const duration = 0.18;
+        const bufferSize = ctx.sampleRate * duration;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            const t = i / ctx.sampleRate;
+            const env = Math.exp(-t * 25);
+            const noise = (Math.random() * 2 - 1) * 0.5;
+            const tone = Math.sin(2 * Math.PI * (2000 + t * 8000) * t) * 0.5;
+            data[i] = (noise + tone) * env;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        
+        const gain = ctx.createGain();
+        gain.gain.value = 0.4;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1500;
+        
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        src.start();
+        
+        // 금속 울림 추가
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
+        const oscGain = ctx.createGain();
+        oscGain.gain.setValueAtTime(0.15, ctx.currentTime);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.connect(oscGain);
+        oscGain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+    }
+    
+    else if (type === 'arrow') {
+        // 궁수: 화살 소리 (쉭!)
+        // 고주파 → 저주파 스윕 + 바람 노이즈
+        const duration = 0.25;
+        const bufferSize = ctx.sampleRate * duration;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            const t = i / ctx.sampleRate;
+            const env = (t < 0.02) ? t / 0.02 : Math.exp(-(t - 0.02) * 15);
+            const noise = (Math.random() * 2 - 1);
+            data[i] = noise * env * 0.5;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(6000, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.2);
+        filter.Q.value = 2;
+        
+        const gain = ctx.createGain();
+        gain.gain.value = 0.5;
+        
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        src.start();
+        
+        // 화살 꽂히는 소리 (툭)
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, ctx.currentTime + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.2);
+        const impactGain = ctx.createGain();
+        impactGain.gain.setValueAtTime(0, ctx.currentTime);
+        impactGain.gain.setValueAtTime(0.3, ctx.currentTime + 0.12);
+        impactGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.connect(impactGain);
+        impactGain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+    }
+    
+    else if (type === 'magic') {
+        // 마법사: 마법 시전 소리 (퓨웅~)
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(300, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
+        osc1.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.35);
+        
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(450, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.15);
+        osc2.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.35);
+        
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        
+        const reverb = ctx.createBiquadFilter();
+        reverb.type = 'lowpass';
+        reverb.frequency.value = 3000;
+        
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(reverb);
+        reverb.connect(ctx.destination);
+        osc1.start();
+        osc2.start();
+        osc1.stop(ctx.currentTime + 0.35);
+        osc2.stop(ctx.currentTime + 0.35);
+    }
+    
+    else if (type === 'holy') {
+        // 성기사: 신성한 소리 (띠링~)
+        const freqs = [523, 659, 784];
+        freqs.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            const gain = ctx.createGain();
+            const start = ctx.currentTime + i * 0.06;
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(0.15, start + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.4);
+        });
+    }
+}
+</script>
+"""
+
+def play_sound(sound_type):
+    """효과음 재생 (HTML에 삽입)"""
+    st.markdown(f'<script>playSound("{sound_type}");</script>', unsafe_allow_html=True)
+
 # ============================================
 #  게임 데이터
 # ============================================
@@ -707,7 +862,14 @@ def scene_area_select():
 # ============================================
 
 def scene_battle():
+    # ── 효과음 재생 (이전 턴에서 예약된 것) ──
+    st.markdown(SOUND_JS, unsafe_allow_html=True)
+    if st.session_state.get("pending_sound"):
+        sound = st.session_state.pop("pending_sound")
+        st.markdown(f'<script>setTimeout(()=>playSound("{sound}"), 100);</script>', unsafe_allow_html=True)
+
     p = st.session_state.player
+    # ... 나머지 코드 그대로
     m = st.session_state.current_monster
     m_hp = st.session_state.monster_hp
     m_max = st.session_state.monster_max_hp
@@ -858,7 +1020,7 @@ def scene_battle():
             unsafe_allow_html=True
         )
 
-    # ── 공격 처리 ──
+        # ── 공격 처리 ──
     if btn_atk:
         st.session_state.turn += 1
         dmg = calc_damage(p["atk"], m["def"])
@@ -866,6 +1028,17 @@ def scene_battle():
         st.session_state.sp = min(max_sp, sp + 25)
         add_log(f"⚔️ {p['name']}의 공격! → <b>{dmg}</b> 데미지 (SP+25)")
         st.session_state.last_action = "player_hit"
+
+        # 직업별 효과음 지정
+        job = p["job"]
+        if "전사" in job:
+            st.session_state["pending_sound"] = "sword"
+        elif "궁수" in job:
+            st.session_state["pending_sound"] = "arrow"
+        elif "마법사" in job:
+            st.session_state["pending_sound"] = "magic"
+        elif "성기사" in job:
+            st.session_state["pending_sound"] = "holy"
 
         if st.session_state.monster_hp > 0:
             if process_burn():
@@ -875,7 +1048,7 @@ def scene_battle():
         else:
             battle_victory()
         st.rerun()
-
+        
     # ── 스킬 처리 ──
     if btn_skill and can_skill:
         st.session_state.turn += 1
