@@ -722,57 +722,62 @@ def scene_battle():
     else:
         st.markdown(f'<div class="title-box"><h1>⚔️ 전투</h1><p class="sub">Turn {st.session_state.turn}</p></div>', unsafe_allow_html=True)
 
-    # 애니메이션 클래스
+    # 애니메이션
     m_anim = "shake" if st.session_state.last_action == "player_hit" else ""
     p_anim = "flash-red" if st.session_state.last_action == "enemy_hit" else ""
 
-    # 화상 텍스트
+    # 화상·스킬 텍스트
     burn_text = ""
     if st.session_state.burn_turns > 0:
         burn_text = f' · <span style="color:#ff6600;">🔥화상 {st.session_state.burn_turns}턴</span>'
-
-    # 몬스터 스킬 텍스트
     m_skill_text = ""
     if m.get("skill"):
         m_skill_text = f" · ✨{m['skill']}"
 
     # ── 몬스터 카드 ──
     m_bar = make_bar(m_hp, m_max, '#cc3333', '#cc6600', '#cc3333')
+    m_hp_pct = int((m_hp / max(1, m_max)) * 100)
     st.markdown(
-        f'<div class="{m_anim}" style="background:linear-gradient(135deg,#2a0a0a,#3a1515);border:1px solid #5a2a2a;border-radius:14px;padding:18px;text-align:center;margin:8px 0;">'
-        f'<div style="font-size:3.5em;">{m["emoji"]}</div>'
-        f'<div style="font-size:1.2em;font-weight:bold;color:#ff6666;margin:6px 0;">{m["name"]}</div>'
-        f'<div style="font-size:0.8em;color:#777;">⚔️{m["atk"]} 🛡️{m["def"]}{m_skill_text}{burn_text}</div>'
-        f'<div style="margin-top:8px;">{m_bar}</div>'
+        f'<div class="{m_anim}" style="background:linear-gradient(135deg,#1a0808,#2a1010);border:1px solid #4a1a1a;border-radius:16px;padding:20px;text-align:center;margin:8px 0;position:relative;overflow:hidden;">'
+        f'<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 50% 30%,#ff000008,transparent 70%);"></div>'
+        f'<div style="font-size:3.5em;filter:drop-shadow(0 4px 8px #00000088);">{m["emoji"]}</div>'
+        f'<div style="font-size:1.3em;font-weight:900;color:#ff6666;margin:8px 0;text-shadow:0 0 10px #ff000033;">{m["name"]}</div>'
+        f'<div style="font-size:0.78em;color:#665;letter-spacing:0.5px;">⚔️ {m["atk"]} · 🛡️ {m["def"]}{m_skill_text}{burn_text}</div>'
+        f'<div style="margin-top:10px;max-width:280px;margin-left:auto;margin-right:auto;">{m_bar}</div>'
+        f'<div style="font-size:0.7em;color:#553;margin-top:4px;">{m_hp_pct}%</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    # ── 전투 로그 (몬스터 바로 아래) ──
-    if st.session_state.battle_log:
-        log_html = "<br>".join(reversed(st.session_state.battle_log[-8:]))
-        st.markdown(
-            f'<div style="background:#08081a;border:1px solid #1e1e3e;border-radius:10px;padding:12px;font-size:0.82em;line-height:1.8;max-height:200px;overflow-y:auto;color:#aaa;margin:8px 0;">'
-            f'{log_html}'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-    # VS
-    st.markdown('<div style="text-align:center;font-size:1.5em;margin:5px 0;">⚡</div>', unsafe_allow_html=True)
+    # VS 구분선
+    st.markdown(
+        '<div style="text-align:center;margin:6px 0;">'
+        '<span style="font-size:1.1em;color:#333;letter-spacing:8px;">─── ⚡ ───</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     # ── 플레이어 카드 ──
     hp_bar_html = make_bar(p['hp'], p['max_hp'])
     sp_bar_html = make_bar(sp, max_sp, '#3399ff', '#3399ff', '#336699', f'{sp}/{max_sp}')
+    hp_pct = int((p['hp'] / max(1, p['max_hp'])) * 100)
     st.markdown(
-        f'<div class="{p_anim}" style="background:linear-gradient(135deg,#161633,#1e1e44);border:1px solid #2e2e5e;border-radius:14px;padding:18px;margin:8px 0;">'
-        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        f'<div><span style="font-size:1.3em;">{p["emoji"]}</span> <b style="color:#ffd700;">{p["name"]}</b> <span style="color:#667;">Lv.{p["level"]}</span></div>'
-        f'<div style="color:#888;font-size:0.85em;">⚔️{p["atk"]} 🛡️{p["def"]}</div>'
-        f'</div>'
-        f'<div style="margin-top:8px;"><span style="font-size:0.72em;color:#888;">❤️ HP</span>{hp_bar_html}</div>'
-        f'<div style="margin-top:4px;"><span style="font-size:0.72em;color:#888;">✨ SP</span>{sp_bar_html}</div>'
-        f'</div>',
+        f'<div class="{p_anim}" style="background:linear-gradient(135deg,#0e0e28,#161640);border:1px solid #2a2a5a;border-radius:16px;padding:18px;margin:8px 0;position:relative;overflow:hidden;">'
+        f'<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 50% 50%,#3399ff05,transparent 70%);"></div>'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;position:relative;">'
+        f'<div style="display:flex;align-items:center;gap:10px;">'
+        f'<span style="font-size:1.8em;filter:drop-shadow(0 2px 4px #00000066);">{p["emoji"]}</span>'
+        f'<div>'
+        f'<div><b style="color:#ffd700;font-size:1.1em;">{p["name"]}</b> <span style="color:#556;font-size:0.85em;">Lv.{p["level"]}</span></div>'
+        f'<div style="font-size:0.75em;color:#667;">⚔️{p["atk"]} · 🛡️{p["def"]} · 💨{p["spd"]}</div>'
+        f'</div></div>'
+        f'<div style="text-align:right;">'
+        f'<div style="font-size:0.7em;color:#556;">HP {hp_pct}%</div>'
+        f'</div></div>'
+        f'<div style="margin-top:10px;position:relative;">'
+        f'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:0.7em;color:#884444;width:20px;">❤️</span><div style="flex:1;">{hp_bar_html}</div></div>'
+        f'<div style="display:flex;align-items:center;gap:8px;margin-top:4px;"><span style="font-size:0.7em;color:#446688;width:20px;">✨</span><div style="flex:1;">{sp_bar_html}</div></div>'
+        f'</div></div>',
         unsafe_allow_html=True
     )
 
@@ -807,9 +812,51 @@ def scene_battle():
             used = sp_potions[0]
             st.session_state.inventory.remove(used)
             st.session_state.sp = min(max_sp, sp + 50)
-            add_log("💙 SP포션 사용! SP +50", "heal")
+            add_log("💙 SP포션 사용! SP +50")
             enemy_turn()
             st.rerun()
+
+    # ── 전투 로그 (맨 아래) ──
+    if st.session_state.battle_log:
+        log_entries = list(reversed(st.session_state.battle_log[-10:]))
+        log_html = ""
+        for i, entry in enumerate(log_entries):
+            opacity = max(0.4, 1.0 - i * 0.07)
+            if "데미지" in entry and ("공격" in entry or "슬래시" in entry or "파이어" in entry or "속사" in entry or "빛" in entry):
+                dot_color = "#ffaa00"
+                border_l = "border-left:3px solid #ffaa0044;"
+            elif "데미지" in entry:
+                dot_color = "#ff4444"
+                border_l = "border-left:3px solid #ff444444;"
+            elif "회복" in entry or "HP+" in entry:
+                dot_color = "#44ff44"
+                border_l = "border-left:3px solid #44ff4444;"
+            elif "SP" in entry:
+                dot_color = "#4488ff"
+                border_l = "border-left:3px solid #4488ff44;"
+            else:
+                dot_color = "#666"
+                border_l = "border-left:3px solid #33333344;"
+
+            log_html += (
+                f'<div style="padding:6px 10px;{border_l}opacity:{opacity};margin-bottom:2px;'
+                f'background:#ffffff03;border-radius:0 6px 6px 0;">'
+                f'<span style="color:{dot_color};margin-right:6px;">●</span>'
+                f'<span style="color:#bbb;font-size:0.83em;">{entry}</span>'
+                f'</div>'
+            )
+
+        st.markdown(
+            f'<div style="margin-top:12px;">'
+            f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+            f'<span style="color:#556;font-size:0.8em;font-weight:bold;letter-spacing:2px;">📜 전투 로그</span>'
+            f'<div style="flex:1;height:1px;background:linear-gradient(90deg,#2a2a5a,transparent);"></div>'
+            f'</div>'
+            f'<div style="background:linear-gradient(135deg,#08081a,#0d0d22);border:1px solid #1a1a3a;border-radius:12px;padding:10px;max-height:220px;overflow-y:auto;">'
+            f'{log_html}'
+            f'</div></div>',
+            unsafe_allow_html=True
+        )
 
     # ── 공격 처리 ──
     if btn_atk:
@@ -817,7 +864,7 @@ def scene_battle():
         dmg = calc_damage(p["atk"], m["def"])
         st.session_state.monster_hp -= dmg
         st.session_state.sp = min(max_sp, sp + 25)
-        add_log(f"⚔️ {p['name']}의 공격! → <b>{dmg}</b> 데미지 (SP+25)", "info")
+        add_log(f"⚔️ {p['name']}의 공격! → <b>{dmg}</b> 데미지 (SP+25)")
         st.session_state.last_action = "player_hit"
 
         if st.session_state.monster_hp > 0:
@@ -840,13 +887,13 @@ def scene_battle():
         if stype == "power":
             dmg = calc_damage(int(p["atk"] * p["skill_mult"]), m["def"])
             st.session_state.monster_hp -= dmg
-            add_log(f"✨ <b>{p['skill']}!</b> → <b>{dmg}</b> 데미지!", "skill")
+            add_log(f"✨ <b>{p['skill']}!</b> → <b>{dmg}</b> 데미지!")
 
         elif stype == "magic_burn":
             dmg = calc_damage(int(p["atk"] * p["skill_mult"]), m["def"])
             st.session_state.monster_hp -= dmg
             st.session_state.burn_turns = 3
-            add_log(f"🔥 <b>{p['skill']}!</b> → <b>{dmg}</b> 데미지 + 화상 3턴!", "skill")
+            add_log(f"🔥 <b>{p['skill']}!</b> → <b>{dmg}</b> 데미지 + 화상 3턴!")
 
         elif stype == "multi":
             hits = random.randint(3, 5)
@@ -855,14 +902,14 @@ def scene_battle():
                 d = calc_damage(p["atk"], m["def"])
                 total += d
             st.session_state.monster_hp -= total
-            add_log(f"🏹 <b>{p['skill']}!</b> {hits}연속! → 총 <b>{total}</b>!", "skill")
+            add_log(f"🏹 <b>{p['skill']}!</b> {hits}연속! → 총 <b>{total}</b>!")
 
         elif stype == "heal_atk":
             heal = int(p["max_hp"] * 0.35)
             p["hp"] = min(p["max_hp"], p["hp"] + heal)
             dmg = calc_damage(int(p["atk"] * p["skill_mult"]), m["def"])
             st.session_state.monster_hp -= dmg
-            add_log(f"✨ <b>{p['skill']}!</b> HP+{heal} & {dmg}데미지!", "skill")
+            add_log(f"✨ <b>{p['skill']}!</b> HP+{heal} & {dmg}데미지!")
 
         if st.session_state.monster_hp > 0:
             if process_burn():
@@ -882,7 +929,7 @@ def scene_battle():
         old = p["hp"]
         p["hp"] = min(p["max_hp"], p["hp"] + heal)
         actual = p["hp"] - old
-        add_log(f"🧪 {used} 사용! HP +<b>{actual}</b>", "heal")
+        add_log(f"🧪 {used} 사용! HP +<b>{actual}</b> 회복")
         st.session_state.last_action = ""
         enemy_turn()
         st.rerun()
@@ -891,15 +938,14 @@ def scene_battle():
     if btn_flee and not is_boss:
         chance = 45 + p["spd"] * 2
         if random.randint(1, 100) <= chance:
-            add_log("🏃 도망 성공!", "info")
+            add_log("🏃 도망 성공!")
             st.session_state.scene = "town"
             st.session_state.burn_turns = 0
         else:
-            add_log("🏃 도망 실패!", "dmg")
+            add_log("🏃 도망 실패!")
             st.session_state.last_action = ""
             enemy_turn()
         st.rerun()
-
 
 # ============================================
 #  씬: 전투 결과
