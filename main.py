@@ -274,7 +274,7 @@ def make_bar(current, maximum, color_high="#00cc44", color_mid="#ffaa00", color_
     elif pct > 25: c = color_mid
     else: c = color_low
     display = label if label else f"{current}/{maximum}"
-    return f'<div class="bar-bg"><div class="bar-fill" style="width:{pct}%;background:linear-gradient(90deg,{c},{c}88);">{display}</div></div>'
+    return f'<div style="background:#0a0a15;border-radius:8px;height:22px;overflow:hidden;border:1px solid #222;margin:4px 0;"><div style="height:100%;width:{pct}%;background:linear-gradient(90deg,{c},{c}88);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75em;font-weight:bold;color:white;text-shadow:1px 1px 2px #000;">{display}</div></div>'
 
 def add_log(msg, cls=""):
     tag = f'<span class="{cls}">{msg}</span>' if cls else msg
@@ -718,67 +718,63 @@ def scene_battle():
 
     # 제목
     if is_boss:
-        st.markdown("""
-        <div class="title-box">
-            <h1>🐉 최종 보스전</h1>
-            <p class="sub" style="color:#ff4444;">고대 드래곤 이그니스</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="title-box"><h1>🐉 최종 보스전</h1><p class="sub" style="color:#ff4444;">고대 드래곤 이그니스</p></div>', unsafe_allow_html=True)
     else:
-        st.markdown(f"""
-        <div class="title-box">
-            <h1>⚔️ 전투</h1>
-            <p class="sub">Turn {st.session_state.turn}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="title-box"><h1>⚔️ 전투</h1><p class="sub">Turn {st.session_state.turn}</p></div>', unsafe_allow_html=True)
 
-    # 피격 애니메이션 클래스
+    # 애니메이션 클래스
     m_anim = "shake" if st.session_state.last_action == "player_hit" else ""
     p_anim = "flash-red" if st.session_state.last_action == "enemy_hit" else ""
 
-    # 몬스터 카드
-    burn_text = f"<span style='color:#ff6600; font-size:0.8em;'>🔥 화상 {st.session_state.burn_turns}턴</span>" if st.session_state.burn_turns > 0 else ""
-    st.markdown(f"""
-    <div class="box-red {m_anim}">
-        <div class="big-emoji">{m['emoji']}</div>
-        <div style="font-size:1.2em; font-weight:bold; color:#ff6666; margin:6px 0;">
-            {m['name']}
-        </div>
-        <div style="font-size:0.8em; color:#777; margin-bottom:6px;">
-            ⚔️{m['atk']} 🛡️{m['def']}
-            {(' · ✨' + m.get('skill','')) if m.get('skill') else ''}
-            {burn_text}
-        </div>
-        {make_bar(m_hp, m_max, '#cc3333', '#cc6600', '#cc3333')}
-    </div>
-    """, unsafe_allow_html=True)
+    # 화상 텍스트
+    burn_text = ""
+    if st.session_state.burn_turns > 0:
+        burn_text = f' · <span style="color:#ff6600;">🔥화상 {st.session_state.burn_turns}턴</span>'
+
+    # 몬스터 스킬 텍스트
+    m_skill_text = ""
+    if m.get("skill"):
+        m_skill_text = f" · ✨{m['skill']}"
+
+    # ── 몬스터 카드 ──
+    m_bar = make_bar(m_hp, m_max, '#cc3333', '#cc6600', '#cc3333')
+    st.markdown(
+        f'<div class="{m_anim}" style="background:linear-gradient(135deg,#2a0a0a,#3a1515);border:1px solid #5a2a2a;border-radius:14px;padding:18px;text-align:center;margin:8px 0;">'
+        f'<div style="font-size:3.5em;">{m["emoji"]}</div>'
+        f'<div style="font-size:1.2em;font-weight:bold;color:#ff6666;margin:6px 0;">{m["name"]}</div>'
+        f'<div style="font-size:0.8em;color:#777;">⚔️{m["atk"]} 🛡️{m["def"]}{m_skill_text}{burn_text}</div>'
+        f'<div style="margin-top:8px;">{m_bar}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    # ── 전투 로그 (몬스터 바로 아래) ──
+    if st.session_state.battle_log:
+        log_html = "<br>".join(reversed(st.session_state.battle_log[-8:]))
+        st.markdown(
+            f'<div style="background:#08081a;border:1px solid #1e1e3e;border-radius:10px;padding:12px;font-size:0.82em;line-height:1.8;max-height:200px;overflow-y:auto;color:#aaa;margin:8px 0;">'
+            f'{log_html}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     # VS
-    st.markdown("<div style='text-align:center; font-size:1.5em; margin:5px 0;'>⚡</div>", unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;font-size:1.5em;margin:5px 0;">⚡</div>', unsafe_allow_html=True)
 
-    # 플레이어 카드
-    st.markdown(f"""
-    <div class="box {p_anim}">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <span style="font-size:1.3em;">{p['emoji']}</span>
-                <b style="color:#ffd700;">{p['name']}</b>
-                <span style="color:#667;"> Lv.{p['level']}</span>
-            </div>
-            <div style="color:#888; font-size:0.85em;">
-                ⚔️{p['atk']} 🛡️{p['def']}
-            </div>
-        </div>
-        <div style="margin-top:8px;">
-            <span style="font-size:0.72em; color:#888;">❤️ HP</span>
-            {make_bar(p['hp'], p['max_hp'])}
-        </div>
-        <div style="margin-top:4px;">
-            <span style="font-size:0.72em; color:#888;">✨ SP</span>
-            {make_bar(sp, max_sp, '#3399ff', '#3399ff', '#336699', f'{sp}/{max_sp}')}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── 플레이어 카드 ──
+    hp_bar_html = make_bar(p['hp'], p['max_hp'])
+    sp_bar_html = make_bar(sp, max_sp, '#3399ff', '#3399ff', '#336699', f'{sp}/{max_sp}')
+    st.markdown(
+        f'<div class="{p_anim}" style="background:linear-gradient(135deg,#161633,#1e1e44);border:1px solid #2e2e5e;border-radius:14px;padding:18px;margin:8px 0;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        f'<div><span style="font-size:1.3em;">{p["emoji"]}</span> <b style="color:#ffd700;">{p["name"]}</b> <span style="color:#667;">Lv.{p["level"]}</span></div>'
+        f'<div style="color:#888;font-size:0.85em;">⚔️{p["atk"]} 🛡️{p["def"]}</div>'
+        f'</div>'
+        f'<div style="margin-top:8px;"><span style="font-size:0.72em;color:#888;">❤️ HP</span>{hp_bar_html}</div>'
+        f'<div style="margin-top:4px;"><span style="font-size:0.72em;color:#888;">✨ SP</span>{sp_bar_html}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
     st.markdown("")
 
@@ -791,30 +787,31 @@ def scene_battle():
     col3, col4 = st.columns(2)
 
     with col1:
-        btn_atk = st.button("⚔️ 공격\n(SP+25)", use_container_width=True, type="primary")
+        btn_atk = st.button("⚔️ 공격 (SP+25)", use_container_width=True, type="primary")
     with col2:
-        skill_label = f"✨ {p['skill']}\n(SP {p['sp_cost']})" if can_skill else f"🚫 {p['skill']}\n(SP 부족)"
-        btn_skill = st.button(skill_label, use_container_width=True, disabled=not can_skill)
+        if can_skill:
+            btn_skill = st.button(f"✨ {p['skill']} (SP {p['sp_cost']})", use_container_width=True)
+        else:
+            btn_skill = st.button(f"🚫 {p['skill']} (SP부족)", use_container_width=True, disabled=True)
     with col3:
-        btn_pot = st.button(f"🧪 HP포션 ({len(potions)})", use_container_width=True, disabled=len(potions) == 0)
+        btn_pot = st.button(f"🧪 HP포션 ({len(potions)})", use_container_width=True, disabled=len(potions)==0)
     with col4:
         if is_boss:
-            btn_flee = st.button("🏃 도망 (불가)", use_container_width=True, disabled=True)
+            btn_flee = st.button("🏃 도망불가", use_container_width=True, disabled=True)
         else:
             btn_flee = st.button("🏃 도망", use_container_width=True)
 
-    # SP 포션 (별도)
+    # SP 포션
     if sp_potions:
-        if st.button(f"💙 SP포션 사용 ({len(sp_potions)})", use_container_width=True):
+        if st.button(f"💙 SP포션 ({len(sp_potions)})", use_container_width=True):
             used = sp_potions[0]
             st.session_state.inventory.remove(used)
-            recover = 50
-            st.session_state.sp = min(max_sp, sp + recover)
-            add_log(f"💙 SP포션 사용! SP +{recover}", "heal")
+            st.session_state.sp = min(max_sp, sp + 50)
+            add_log("💙 SP포션 사용! SP +50", "heal")
             enemy_turn()
             st.rerun()
 
-    # ── 공격 ──
+    # ── 공격 처리 ──
     if btn_atk:
         st.session_state.turn += 1
         dmg = calc_damage(p["atk"], m["def"])
@@ -823,19 +820,17 @@ def scene_battle():
         add_log(f"⚔️ {p['name']}의 공격! → <b>{dmg}</b> 데미지 (SP+25)", "info")
         st.session_state.last_action = "player_hit"
 
-        # 화상 처리
         if st.session_state.monster_hp > 0:
             if process_burn():
                 battle_victory()
-                st.rerun()
             else:
                 enemy_turn()
         else:
             battle_victory()
         st.rerun()
 
-    # ── 스킬 ──
-    if btn_skill:
+    # ── 스킬 처리 ──
+    if btn_skill and can_skill:
         st.session_state.turn += 1
         st.session_state.sp -= p["sp_cost"]
         st.session_state.last_action = "player_hit"
@@ -860,19 +855,18 @@ def scene_battle():
                 d = calc_damage(p["atk"], m["def"])
                 total += d
             st.session_state.monster_hp -= total
-            add_log(f"🏹 <b>{p['skill']}!</b> {hits}연속! → 총 <b>{total}</b> 데미지!", "skill")
+            add_log(f"🏹 <b>{p['skill']}!</b> {hits}연속! → 총 <b>{total}</b>!", "skill")
 
         elif stype == "heal_atk":
             heal = int(p["max_hp"] * 0.35)
             p["hp"] = min(p["max_hp"], p["hp"] + heal)
             dmg = calc_damage(int(p["atk"] * p["skill_mult"]), m["def"])
             st.session_state.monster_hp -= dmg
-            add_log(f"✨ <b>{p['skill']}!</b> HP+{heal} & {dmg} 데미지!", "skill")
+            add_log(f"✨ <b>{p['skill']}!</b> HP+{heal} & {dmg}데미지!", "skill")
 
         if st.session_state.monster_hp > 0:
             if process_burn():
                 battle_victory()
-                st.rerun()
             else:
                 enemy_turn()
         else:
@@ -880,7 +874,7 @@ def scene_battle():
         st.rerun()
 
     # ── HP 포션 ──
-    if btn_pot:
+    if btn_pot and potions:
         st.session_state.turn += 1
         used = potions[0]
         st.session_state.inventory.remove(used)
@@ -888,7 +882,7 @@ def scene_battle():
         old = p["hp"]
         p["hp"] = min(p["max_hp"], p["hp"] + heal)
         actual = p["hp"] - old
-        add_log(f"🧪 {used} 사용! HP +<b>{actual}</b> 회복", "heal")
+        add_log(f"🧪 {used} 사용! HP +<b>{actual}</b>", "heal")
         st.session_state.last_action = ""
         enemy_turn()
         st.rerun()
@@ -897,7 +891,7 @@ def scene_battle():
     if btn_flee and not is_boss:
         chance = 45 + p["spd"] * 2
         if random.randint(1, 100) <= chance:
-            add_log("🏃 도망에 성공!", "info")
+            add_log("🏃 도망 성공!", "info")
             st.session_state.scene = "town"
             st.session_state.burn_turns = 0
         else:
@@ -905,12 +899,6 @@ def scene_battle():
             st.session_state.last_action = ""
             enemy_turn()
         st.rerun()
-
-    # ── 전투 로그 ──
-    if st.session_state.battle_log:
-        st.markdown("#### 📜 전투 로그")
-        log_html = "<br>".join(reversed(st.session_state.battle_log))
-        st.markdown(f'<div class="log-box">{log_html}</div>', unsafe_allow_html=True)
 
 
 # ============================================
